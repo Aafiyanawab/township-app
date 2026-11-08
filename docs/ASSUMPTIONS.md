@@ -12,3 +12,7 @@
 - A10: Matching weights are reference 60, UPI ID 30, amount 20. Auto-post needs a score of 80 or more.
 - A11: Rows with a score of 40 to 79, or with conflicting signals, go to the accounts queue. Below 40 they are shown as unmatched.
 - A12: Bank CSV columns are date, description, reference, upi_id, amount (credit positive, debit negative).
+- A13: Response timers by urgency are critical 1 hour, high 4 hours, normal 24 hours, low 48 hours. The brief gives no numbers.
+- A14: The duty manager is the lowest-id help-desk user. Other complaints go to the help-desk user with the fewest active complaints.
+- A15: Safety words (fire, smoke, gas, lift stuck, shock) always escalate. A false alarm is accepted over a missed emergency.
+- A16: Duplicates are matched by category and tower (shared areas) or by flat (in-flat issues) within 48 hours.

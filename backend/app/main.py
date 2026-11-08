@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-from .routers import accounts, auth, health, helpdesk, resident
+from .routers import accounts, auth, complaints, health, helpdesk, resident
 
 app = FastAPI(title="Township API")
 app.add_middleware(
@@ -16,3 +16,4 @@ app.include_router(auth.router)
 app.include_router(helpdesk.router)
 app.include_router(resident.router)
 app.include_router(accounts.router)
+app.include_router(complaints.router)

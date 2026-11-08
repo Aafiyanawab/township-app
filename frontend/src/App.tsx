@@ -1,11 +1,14 @@
+import type { ReactNode } from 'react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import type { UserRole } from './api'
 import { AuthProvider } from './auth/AuthContext'
 import { useAuth } from './auth/useAuth'
 import { ResidentShell } from './components/ResidentShell'
-import { Button, Card } from './components/ui'
+import { AccountsPage } from './pages/AccountsPage'
 import { BillsPage } from './pages/BillsPage'
+import { CommitteePage } from './pages/CommitteePage'
 import { ComplaintsPage } from './pages/ComplaintsPage'
+import { HelpdeskPage } from './pages/HelpdeskPage'
 import { LoginPage } from './pages/LoginPage'
 import { ResidentHomePage } from './pages/ResidentHomePage'
 
@@ -28,27 +31,11 @@ function ResidentOnly() {
   return <Outlet />
 }
 
-function StaffOnly({ requiredRole }: { requiredRole: Exclude<UserRole, 'resident'> }) {
+function StaffOnly({ requiredRole, children }: { requiredRole: Exclude<UserRole, 'resident'>; children: ReactNode }) {
   const { role } = useAuth()
   if (!role) return <Navigate to="/login" replace />
   if (role !== requiredRole) return <Navigate to={roleHomes[role]} replace />
-  return <StaffHome role={requiredRole} />
-}
-
-function StaffHome({ role }: { role: Exclude<UserRole, 'resident'> }) {
-  const { signOut } = useAuth()
-  const titles = { helpdesk: 'Help desk', accounts: 'Accounts', committee: 'Committee' }
-  return (
-    <main className="staff-page">
-      <div className="brand"><span className="brand__mark">T</span><span>Township</span></div>
-      <Card className="staff-card">
-        <p className="eyebrow">STAFF WORKSPACE</p>
-        <h1>{titles[role]}</h1>
-        <p className="muted-copy">You’re signed in with {role} access. This experience currently includes resident services.</p>
-        <Button variant="secondary" onClick={() => { signOut(); window.location.assign('/login') }}>Sign out</Button>
-      </Card>
-    </main>
-  )
+  return children
 }
 
 function AppRoutes() {
@@ -63,9 +50,9 @@ function AppRoutes() {
           <Route path="/complaints" element={<ComplaintsPage />} />
         </Route>
       </Route>
-      <Route path="/helpdesk" element={<StaffOnly requiredRole="helpdesk" />} />
-      <Route path="/accounts" element={<StaffOnly requiredRole="accounts" />} />
-      <Route path="/committee" element={<StaffOnly requiredRole="committee" />} />
+      <Route path="/helpdesk" element={<StaffOnly requiredRole="helpdesk"><HelpdeskPage /></StaffOnly>} />
+      <Route path="/accounts" element={<StaffOnly requiredRole="accounts"><AccountsPage /></StaffOnly>} />
+      <Route path="/committee" element={<StaffOnly requiredRole="committee"><CommitteePage /></StaffOnly>} />
       <Route path="*" element={<RoleHome />} />
     </Routes>
   )

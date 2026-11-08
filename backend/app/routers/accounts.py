@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
@@ -46,6 +46,21 @@ class BankRowPage(BaseModel):
     page: int
     page_size: int
     total: int
+
+
+class FlatOption(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    code: str
+
+
+@router.get("/flats", response_model=list[FlatOption])
+def list_flats_for_resolution(
+    _user: Annotated[User, Depends(require_role("accounts"))],
+    db: Annotated[Session, Depends(get_db)],
+):
+    return db.scalars(select(Flat).order_by(Flat.code)).all()
 
 
 @router.post("/bank-statements", response_model=BankImportSummary)

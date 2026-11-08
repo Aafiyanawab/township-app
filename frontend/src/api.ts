@@ -46,6 +46,57 @@ export type Complaint = {
   events: ComplaintEvent[]
 }
 
+export type HelpdeskComplaint = Omit<Complaint, 'events'> & {
+  flat_id: number
+  first_response_at: string | null
+  assigned_to: number | null
+  duplicate_of_id: number | null
+  overdue: boolean
+  duplicates_count: number
+}
+
+export type BankImportSummary = {
+  total_rows: number
+  duplicates_skipped: number
+  posted: number
+  queued: number
+  unmatched: number
+  ignored: number
+  batch_id: string
+}
+
+export type BankRow = {
+  id: number
+  status: 'queued' | 'unmatched' | 'posted' | 'ignored'
+  description: string
+  amount: string
+  reference: string | null
+  confidence: number | null
+  match_reason: string | null
+  suggested_flat_code: string | null
+}
+
+export type BankRowsPage = {
+  items: BankRow[]
+  page: number
+  page_size: number
+  total: number
+}
+
+export type FlatOption = { id: number; code: string }
+
+export type CommitteeSummary = {
+  period: string
+  collections: string
+  billed: string
+  dues_ageing: Record<'0_30' | '31_60' | '61_plus', string>
+  complaints_by_status: Record<string, number>
+  average_hours_to_first_response: string | null
+  reopened_count: number
+  reopened_percentage: string
+  average_rating: string | null
+}
+
 export type PaymentReceipt = {
   payment_id: number
   bill_id: number

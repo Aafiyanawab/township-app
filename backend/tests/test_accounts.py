@@ -78,6 +78,19 @@ def test_resident_gets_403(accounts_api):
     assert response.status_code == 403
 
 
+def test_accounts_can_list_flats_for_resolution(accounts_api):
+    client, _, accounts_token, _, _ = accounts_api
+    response = client.get("/accounts/flats", headers={"Authorization": accounts_token})
+    assert response.status_code == 200
+    assert response.json() == [{"id": 1, "code": "T55-0101"}]
+
+
+def test_resident_cannot_list_accounts_flats(accounts_api):
+    client, _, _, resident_token, _ = accounts_api
+    response = client.get("/accounts/flats", headers={"Authorization": resident_token})
+    assert response.status_code == 403
+
+
 def test_upload_posts_matched_rows(accounts_api):
     client, Session, accounts_token, _, _ = accounts_api
     response = client.post(

@@ -1,122 +1,82 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import type { UserRole } from './api'
+import { AuthProvider } from './auth/AuthContext'
+import { useAuth } from './auth/useAuth'
+import { ResidentShell } from './components/ResidentShell'
+import { Button, Card } from './components/ui'
+import { BillsPage } from './pages/BillsPage'
+import { ComplaintsPage } from './pages/ComplaintsPage'
+import { LoginPage } from './pages/LoginPage'
+import { ResidentHomePage } from './pages/ResidentHomePage'
 
-function App() {
-  const [count, setCount] = useState(0)
+const roleHomes: Record<UserRole, string> = {
+  resident: '/home',
+  helpdesk: '/helpdesk',
+  accounts: '/accounts',
+  committee: '/committee',
+}
 
+function RoleHome() {
+  const { role } = useAuth()
+  return <Navigate to={role ? roleHomes[role] : '/login'} replace />
+}
+
+function ResidentOnly() {
+  const { role } = useAuth()
+  if (!role) return <Navigate to="/login" replace />
+  if (role !== 'resident') return <Navigate to={roleHomes[role]} replace />
+  return <Outlet />
+}
+
+function StaffOnly({ requiredRole }: { requiredRole: Exclude<UserRole, 'resident'> }) {
+  const { role } = useAuth()
+  if (!role) return <Navigate to="/login" replace />
+  if (role !== requiredRole) return <Navigate to={roleHomes[role]} replace />
+  return <StaffHome role={requiredRole} />
+}
+
+function StaffHome({ role }: { role: Exclude<UserRole, 'resident'> }) {
+  const { signOut } = useAuth()
+  const titles = { helpdesk: 'Help desk', accounts: 'Accounts', committee: 'Committee' }
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <main className="staff-page">
+      <div className="brand"><span className="brand__mark">T</span><span>Township</span></div>
+      <Card className="staff-card">
+        <p className="eyebrow">STAFF WORKSPACE</p>
+        <h1>{titles[role]}</h1>
+        <p className="muted-copy">You’re signed in with {role} access. This experience currently includes resident services.</p>
+        <Button variant="secondary" onClick={() => { signOut(); window.location.assign('/login') }}>Sign out</Button>
+      </Card>
+    </main>
   )
 }
 
-export default App
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/" element={<RoleHome />} />
+      <Route element={<ResidentOnly />}>
+        <Route element={<ResidentShell />}>
+          <Route path="/home" element={<ResidentHomePage />} />
+          <Route path="/bills" element={<BillsPage />} />
+          <Route path="/complaints" element={<ComplaintsPage />} />
+        </Route>
+      </Route>
+      <Route path="/helpdesk" element={<StaffOnly requiredRole="helpdesk" />} />
+      <Route path="/accounts" element={<StaffOnly requiredRole="accounts" />} />
+      <Route path="/committee" element={<StaffOnly requiredRole="committee" />} />
+      <Route path="*" element={<RoleHome />} />
+    </Routes>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
+  )
+}

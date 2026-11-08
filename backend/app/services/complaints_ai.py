@@ -108,8 +108,29 @@ def anthropic_llm(text: str) -> dict:
     return json.loads(raw[raw.index("{"): raw.rindex("}") + 1])
 
 
+def gemini_llm(text: str) -> dict:
+    import httpx  # already a dependency; no extra SDK needed
+    model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    resp = httpx.post(
+        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+        headers={"x-goog-api-key": settings.gemini_api_key},
+        json={"system_instruction": {"parts": [{"text": _SYSTEM}]},
+              "contents": [{"role": "user", "parts": [{"text": f"<complaint>{text}</complaint>"}]}],
+              "generationConfig": {"responseMimeType": "application/json", "temperature": 0,
+                                   "maxOutputTokens": 500}},
+        timeout=8.0)
+    resp.raise_for_status()
+    raw = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+    return json.loads(raw[raw.index("{"): raw.rindex("}") + 1])
+
+
 def default_llm() -> Callable[[str], dict] | None:
-    return anthropic_llm if settings.anthropic_api_key else None
+    """Gemini if GEMINI_API_KEY is set, else Anthropic if ANTHROPIC_API_KEY is set, else no LLM."""
+    if settings.gemini_api_key:
+        return gemini_llm
+    if settings.anthropic_api_key:
+        return anthropic_llm
+    return None
 
 
 def classify_complaint(text: str, llm: Callable[[str], dict] | None = None) -> Classification:

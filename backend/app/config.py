@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = 60
     otp_mode: str = "mock"
     anthropic_api_key: str = ""
+    gemini_api_key: str = ""
     cors_origins: str = "http://localhost:5173"
 
 

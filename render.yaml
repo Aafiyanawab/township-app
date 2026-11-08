@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: township-app
+    runtime: docker
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: OTP_MODE
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: SEED_ON_START
+        sync: false
+      - key: ENV
+        sync: false

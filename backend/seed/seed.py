@@ -47,11 +47,8 @@ def add_flat_with_bill(db, code, name, area, tenant, paid, due_on, period, phone
     return flat
 
 
-def run():
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
-    db = SessionLocal()
-
+def seed_demo_data(db):
+    """Insert demo rows into an empty database without creating or dropping tables."""
     # staff (demo accounts)
     staff = [("9000010001", "Help Desk Demo", "helpdesk"), ("9000010002", "Accounts Demo", "accounts"),
              ("9000010003", "Committee Demo", "committee")]
@@ -116,9 +113,15 @@ def run():
             complaint(code, u, "Lift not working in tower 7", "lift", "high", "open", 4,
                       ai_category="lift", ai_confidence=88, duplicate_of_id=lift.id)
     db.commit()
-    db.close()
-    print(f"Seeded {len(flats)} flats. Staff logins: 9000010001 (helpdesk), 9000010002 (accounts), "
-          "9000010003 (committee). Demo OTP: 123456")
+    print(f"Seeded {len(flats)} demo flats and their related records.")
+
+
+def run():
+    """Destructive reset reserved for the explicit `python -m seed.seed` CLI."""
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+    with SessionLocal() as db:
+        seed_demo_data(db)
 
 
 if __name__ == "__main__":

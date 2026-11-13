@@ -1,9 +1,9 @@
 from datetime import date, datetime
 from decimal import Decimal, ROUND_HALF_UP
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, ConfigDict, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StringConstraints
 from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
@@ -13,26 +13,31 @@ from ..models import Bill, Complaint, ComplaintEvent, Payment, User
 from ..services import complaints as complaint_service
 
 router = APIRouter(tags=["complaints"])
+ComplaintCategory = Literal[
+    "plumbing", "electrical", "lift", "cleaning", "security", "parking",
+    "noise", "lighting", "safety", "general",
+]
+ComplaintStatus = Literal["open", "assigned", "in_progress", "resolved", "closed"]
 
 
 class CreateComplaintRequest(BaseModel):
-    text: str
+    text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=5, max_length=1000)]
 
 
 class RateComplaintRequest(BaseModel):
-    rating: StrictInt
+    rating: Annotated[StrictInt, Field(ge=1, le=5)]
 
 
 class CategoryRequest(BaseModel):
-    category: str
+    category: ComplaintCategory
 
 
 class AssignRequest(BaseModel):
-    assignee_id: int
+    assignee_id: int = Field(gt=0)
 
 
 class StatusRequest(BaseModel):
-    status: str
+    status: ComplaintStatus
 
 
 class ORMResponse(BaseModel):
@@ -170,8 +175,8 @@ def reopen_resident_complaint(
 def helpdesk_complaints(
     _user: Annotated[User, Depends(require_role("helpdesk"))],
     db: Annotated[Session, Depends(get_db)],
-    status: str | None = Query(default=None),
-    category: str | None = Query(default=None),
+    status: ComplaintStatus | None = Query(default=None),
+    category: ComplaintCategory | None = Query(default=None),
 ):
     query = select(Complaint)
     if status is not None:

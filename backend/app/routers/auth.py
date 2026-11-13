@@ -1,14 +1,15 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from jose import jwt
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+import jwt
 from pydantic import BaseModel, StringConstraints
 from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..db import get_db
 from ..models import User
+from ..rate_limit import check_otp_rate_limit
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 Phone = Annotated[str, StringConstraints(pattern=r"^\+?[0-9]{7,15}$")]
@@ -24,14 +25,16 @@ class OTPVerification(BaseModel):
 
 
 @router.post("/request-otp")
-def request_otp(payload: OTPRequest, db: Annotated[Session, Depends(get_db)]):
+def request_otp(payload: OTPRequest, request: Request, db: Annotated[Session, Depends(get_db)]):
+    check_otp_rate_limit(payload.phone, request.client.host if request.client else None)
     # Same response for existing and unknown numbers prevents account discovery.
     db.query(User.id).filter(User.phone == payload.phone, User.is_active.is_(True)).first()
     return {"message": "If the phone number is registered, an OTP has been sent."}
 
 
 @router.post("/verify-otp")
-def verify_otp(payload: OTPVerification, db: Annotated[Session, Depends(get_db)]):
+def verify_otp(payload: OTPVerification, request: Request, db: Annotated[Session, Depends(get_db)]):
+    check_otp_rate_limit(payload.phone, request.client.host if request.client else None)
     user = db.query(User).filter(User.phone == payload.phone, User.is_active.is_(True)).first()
     if settings.otp_mode != "mock" or payload.otp != "123456" or user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid phone or OTP")

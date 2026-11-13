@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 from fastapi.testclient import TestClient
-from jose import jwt
+import jwt
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session as SQLAlchemySession, sessionmaker
 from sqlalchemy.pool import StaticPool

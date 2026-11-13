@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 from fastapi.testclient import TestClient
-from jose import jwt
+import jwt
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -310,7 +310,7 @@ def test_helpdesk_missing_complaint_is_404_and_invalid_changes_are_409(complaint
                     json={"status": "closed"}),
     ]
     assert [response.status_code for response in missing_responses] == [404, 404, 404]
-    assert [response.status_code for response in invalid_responses] == [409, 409, 409]
+    assert [response.status_code for response in invalid_responses] == [422, 409, 409]
 
 
 def test_committee_summary_reports_finance_and_complaint_metrics(complaints_api):

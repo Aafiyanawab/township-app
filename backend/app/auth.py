@@ -3,7 +3,8 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
+import jwt
+from jwt.exceptions import PyJWTError
 from sqlalchemy.orm import Session
 
 from .config import settings
@@ -23,7 +24,7 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Annotate
         claims = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
         user_id = int(claims["sub"])
         role = claims["role"]
-    except (JWTError, KeyError, TypeError, ValueError):
+    except (PyJWTError, KeyError, TypeError, ValueError):
         raise unauthorized
 
     user = db.get(User, user_id)

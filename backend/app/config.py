@@ -1,5 +1,7 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from math import log2
+
 from pydantic import model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -17,8 +19,22 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def require_production_jwt_secret(self):
-        if self.env.lower() in {"prod", "production"} and len(self.jwt_secret) < 32:
-            raise ValueError("JWT_SECRET must contain at least 32 characters in production")
+        if self.env.lower() in {"prod", "production"}:
+            secret = self.jwt_secret.strip()
+            known_defaults = {
+                "dev-only-change-me",
+                "change-me",
+                "replace-with-a-long-random-secret",
+                "your-secret-key",
+                "secret",
+                "password",
+            }
+            entropy = -sum(
+                (count / len(secret)) * log2(count / len(secret))
+                for count in (secret.count(char) for char in set(secret))
+            ) if secret else 0
+            if secret.lower() in known_defaults or len(secret) < 32 or entropy < 3.5:
+                raise ValueError("JWT_SECRET must be a strong, non-default value of at least 32 characters in production")
         return self
 
 
